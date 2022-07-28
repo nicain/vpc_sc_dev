@@ -150,7 +150,7 @@ curl -H "Authorization: Bearer $(gcloud auth application-default print-access-to
 
 
 # Update the Dialogflow agent to query the webhook URI:
-curl -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+curl -s -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
   -H "Content-Type:application/json" \
   -H "x-goog-user-project: ${PROJECT_ID}" \
   "https://${REGION?}-dialogflow.googleapis.com/v3/${AGENT_NAME?}/webhooks" > webhooks.json
@@ -166,12 +166,12 @@ curl -X PATCH -H "Authorization: Bearer $(gcloud auth application-default print-
   "https://${REGION?}-dialogflow.googleapis.com/v3/${DF_WEBHOOK_NAME?}"
 
 # Test the Dialogflow agent against the webhook URI:
-curl -X GET -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+curl -s -X GET -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
   -H "Content-Type:application/json" \
   -H "x-goog-user-project: ${PROJECT_ID}" \
   "https://${REGION?}-dialogflow.googleapis.com/v3/${AGENT_NAME?}/flows" > flows.json
 export CRUISE_PLAN_FLOW=$(cat flows.json | jq -r '.flows | map(select(.displayName== "Cruise Plan"))[0].name')
-curl -X GET -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+curl -s -X GET -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
   -H "Content-Type:application/json" \
   -H "x-goog-user-project: ${PROJECT_ID}" \
   "https://${REGION?}-dialogflow.googleapis.com/v3/${CRUISE_PLAN_FLOW?}/pages" > cruise_plan_flow_pages.json
