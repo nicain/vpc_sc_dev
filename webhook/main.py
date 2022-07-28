@@ -22,70 +22,68 @@ def cxPrebuiltAgentsTelecom(request):
     print('Cloud Function:' + 'Invoked cloud function from Dialogflow')
     request_dict = request.get_json()
 
-    # Get the parameters in current page
-    parameter_info_list = request_dict["pageInfo"]["formInfo"]["parameterInfo"]
-    parameter_dict = {}
-    for parameter_info in parameter_info_list:
-        key = parameter_info["displayName"]
-        parameter_dict[key] = parameter_info["value"]
-
     # Get the tag
     tag = request_dict["fulfillmentInfo"]["tag"]
 
-    # BEGIN detectCustomerAnomaly
-    if tag == 'detectCustomerAnomaly':
-        print(tag + ' was triggered.')
-        phone_number = parameter_dict["phone_number"]
-        bill_month = parameter_dict["bill_state"]
-        parameters = copy.deepcopy(parameter_dict)
-        bill_amount = None
-        product_line = None
-        anomaly_detect = "false"
-        purchase = "The Godfather"
-        purchase_amount = 9.99
-        total_bill_amount = 64.33
-        bill_without_purchase = 54.34
-        updated_parameters = {}
+    # # BEGIN detectCustomerAnomaly
+    # if tag == 'detectCustomerAnomaly':
 
-        month_name, first_of_month, last_month_name = helpers.get_date_details(bill_month)
-        print(month_name, first_of_month, last_month_name)
+    #     # Get the parameters in current page
+    #     parameter_dict = request_dict["sessionInfo"]["parameters"]
 
-        # Getting the month name based on the bill state - current or previous
-        # For example, if the current month is December, we get the values as
-        # December, December 1st, November
+    #     print(tag + ' was triggered.')
+    #     phone_number = parameter_dict["phone_number"]
+    #     bill_month = parameter_dict["bill_state"]
+    #     parameters = copy.deepcopy(parameter_dict)
+    #     bill_amount = None
+    #     product_line = None
+    #     anomaly_detect = "false"
+    #     purchase = "The Godfather"
+    #     purchase_amount = 9.99
+    #     total_bill_amount = 64.33
+    #     bill_without_purchase = 54.34
+    #     updated_parameters = {}
 
-        # Only 999999 will have anomaly detection 
-        if phone_number.toString() == '999999':
-            anomaly_detect = "true"
-            product_line = "phone"
-            purchase = "device protection"
-            updated_parameters["product_line"] = product_line
-            updated_parameters["bill_month"] = month_name
-            updated_parameters["last_month"] = last_month_name
+    #     month_name, first_of_month, last_month_name = helpers.get_date_details(bill_month)
+    #     print(month_name, first_of_month, last_month_name)
 
-        # If bill hike amount is given - we just add it to the total bill
-        if 'bill_amount' in parameters:
-            bill_amount = parameters['bill_amount']
-            purchase_amount = bill_amount['amount']
-            total_bill_amount = 54.34 + purchase_amount
+    #     # Getting the month name based on the bill state - current or previous
+    #     # For example, if the current month is December, we get the values as
+    #     # December, December 1st, November
 
-        # Adding the updated session parameters to the new parameters json
-        updated_parameters["anomaly_detect"] = anomaly_detect
-        updated_parameters["purchase"] = purchase
-        updated_parameters["purchase_amount"] = purchase_amount
-        updated_parameters["bill_without_purchase"] = bill_without_purchase
-        updated_parameters["total_bill"] = total_bill_amount
-        updated_parameters["first_month"] = first_of_month
+    #     # Only 999999 will have anomaly detection 
+    #     if phone_number.toString() == '999999':
+    #         anomaly_detect = "true"
+    #         product_line = "phone"
+    #         purchase = "device protection"
+    #         updated_parameters["product_line"] = product_line
+    #         updated_parameters["bill_month"] = month_name
+    #         updated_parameters["last_month"] = last_month_name
 
-        res = {
-            "sessionInfo": {
-                "parameters": updated_parameters
-            }
-        }
+    #     # If bill hike amount is given - we just add it to the total bill
+    #     if 'bill_amount' in parameters:
+    #         bill_amount = parameters['bill_amount']
+    #         purchase_amount = bill_amount['amount']
+    #         total_bill_amount = 54.34 + purchase_amount
+
+    #     # Adding the updated session parameters to the new parameters json
+    #     updated_parameters["anomaly_detect"] = anomaly_detect
+    #     updated_parameters["purchase"] = purchase
+    #     updated_parameters["purchase_amount"] = purchase_amount
+    #     updated_parameters["bill_without_purchase"] = bill_without_purchase
+    #     updated_parameters["total_bill"] = total_bill_amount
+    #     updated_parameters["first_month"] = first_of_month
+
+    #     res = {
+    #         "sessionInfo": {
+    #             "parameters": updated_parameters
+    #         }
+    #     }
     
     # BEGIN validatePhoneLine
-    elif tag == 'validatePhoneLine':
+    if tag == 'validatePhoneLine':
         print(tag + ' was triggered.')
+        parameter_dict = request_dict["sessionInfo"]["parameters"]
         phone = parameter_dict["phone_number"]
         phone_line_verified = None
         line_index = None
@@ -121,121 +119,121 @@ def cxPrebuiltAgentsTelecom(request):
             }
         }
 
-    # BEGIN cruisePlanCoverage
-    elif tag == 'cruisePlanCoverage':
-        print(tag + ' was triggered.')
-        port = parameter_dict["destination"]
-        port_is_covered = None
-        # Sample list of covered cruise ports.
-        covered_ports = [
-            'mexico',
-            'canada',
-            'anguilla',
-        ]
+    # # BEGIN cruisePlanCoverage
+    # elif tag == 'cruisePlanCoverage':
+    #     print(tag + ' was triggered.')
+    #     port = parameter_dict["destination"]
+    #     port_is_covered = None
+    #     # Sample list of covered cruise ports.
+    #     covered_ports = [
+    #         'mexico',
+    #         'canada',
+    #         'anguilla',
+    #     ]
 
-        if port.lower() in covered_ports:
-            port_is_covered = 'true'
-        else:
-            port_is_covered = 'false'
+    #     if port.lower() in covered_ports:
+    #         port_is_covered = 'true'
+    #     else:
+    #         port_is_covered = 'false'
         
-        res = {
-            "sessionInfo": { 
-                "parameters": { 
-                    "port_is_covered": port_is_covered 
-                    } 
-                }
-            }
+    #     res = {
+    #         "sessionInfo": { 
+    #             "parameters": { 
+    #                 "port_is_covered": port_is_covered 
+    #                 } 
+    #             }
+    #         }
 
-    # BEGIN internationalCoverage
-    elif tag == 'internationalCoverage':
-        print(tag + ' was triggered.')
-        destination = parameter_dict["destination"]
-        coverage = None
-        # Sample list of covered international monthly destinations.
-        covered_by_monthly = [
-            'anguilla',
-            'australia',
-            'brazil',
-            'canada',
-            'chile',
-            'england',
-            'france',
-            'india',
-            'japan',
-            'mexico',
-            'russia',
-            'singapore',
-        ]
-        # Sample list of covered international daily destinations.
-        covered_by_daily = [
-            'anguilla', 'australia', 'brazil', 'canada', 'chile', 'england',
-            'france', 'india', 'japan', 'mexico', 'singapore'
-        ]
-        if destination.lower() in covered_by_monthly & destination.lower() in covered_by_daily:
-            coverage = "both"
-        elif destination.lower() in covered_by_monthly & destination.lower() not in covered_by_daily:
-            coverage = "monthly_only"
-        elif destination.lower() not in covered_by_monthly & destination.lower() not in covered_by_daily:
-            coverage = 'neither'
-        else:
-            # This should never happen, because covered_by_daily is a subset of
-            # covered_by_monthly
-            coverage = 'daily_only'
+    # # BEGIN internationalCoverage
+    # elif tag == 'internationalCoverage':
+    #     print(tag + ' was triggered.')
+    #     destination = parameter_dict["destination"]
+    #     coverage = None
+    #     # Sample list of covered international monthly destinations.
+    #     covered_by_monthly = [
+    #         'anguilla',
+    #         'australia',
+    #         'brazil',
+    #         'canada',
+    #         'chile',
+    #         'england',
+    #         'france',
+    #         'india',
+    #         'japan',
+    #         'mexico',
+    #         'russia',
+    #         'singapore',
+    #     ]
+    #     # Sample list of covered international daily destinations.
+    #     covered_by_daily = [
+    #         'anguilla', 'australia', 'brazil', 'canada', 'chile', 'england',
+    #         'france', 'india', 'japan', 'mexico', 'singapore'
+    #     ]
+    #     if destination.lower() in covered_by_monthly & destination.lower() in covered_by_daily:
+    #         coverage = "both"
+    #     elif destination.lower() in covered_by_monthly & destination.lower() not in covered_by_daily:
+    #         coverage = "monthly_only"
+    #     elif destination.lower() not in covered_by_monthly & destination.lower() not in covered_by_daily:
+    #         coverage = 'neither'
+    #     else:
+    #         # This should never happen, because covered_by_daily is a subset of
+    #         # covered_by_monthly
+    #         coverage = 'daily_only'
         
-        res = {
-            "sessionInfo": { 
-                "parameters": { 
-                    "coverage": coverage 
-                    } 
-                }
-            }
+    #     res = {
+    #         "sessionInfo": { 
+    #             "parameters": { 
+    #                 "coverage": coverage 
+    #                 } 
+    #             }
+    #         }
 
-    # BEGIN cheapestPlan
-    elif tag == 'cheapestPlan':
-        print(tag + ' was triggered.')
-        trip_duration = parameter_dict["trip_duration"]
-        monthly_cost = None
-        daily_cost = None
-        suggested_plan = None
+    # # BEGIN cheapestPlan
+    # elif tag == 'cheapestPlan':
+    #     print(tag + ' was triggered.')
+    #     trip_duration = parameter_dict["trip_duration"]
+    #     monthly_cost = None
+    #     daily_cost = None
+    #     suggested_plan = None
 
-        # Can only suggest cheapest if both are valid for location.
+    #     # Can only suggest cheapest if both are valid for location.
 
-        # When trip is longer than 30 days, calculate per-month cost (example $
-        # amounts). Suggest monthly plan.
-        if trip_duration > 30:
-            monthly_cost = (int(trip_duration / 30)) * 70
-            daily_cost = trip_duration * 10
-            suggested_plan = 'monthly'
+    #     # When trip is longer than 30 days, calculate per-month cost (example $
+    #     # amounts). Suggest monthly plan.
+    #     if trip_duration > 30:
+    #         monthly_cost = (int(trip_duration / 30)) * 70
+    #         daily_cost = trip_duration * 10
+    #         suggested_plan = 'monthly'
     
-        # When trip is <= 30 days, but greater than 6 days, calculate monthly
-        # plan cost and daily plan cost. Suggest monthly b/c it is the cheaper
-        # one.
-        elif trip_duration <= 30 & trip_duration > 6:
-            monthly_cost = 70
-            daily_cost = trip_duration * 10
-            suggested_plan = 'monthly'
+    #     # When trip is <= 30 days, but greater than 6 days, calculate monthly
+    #     # plan cost and daily plan cost. Suggest monthly b/c it is the cheaper
+    #     # one.
+    #     elif trip_duration <= 30 & trip_duration > 6:
+    #         monthly_cost = 70
+    #         daily_cost = trip_duration * 10
+    #         suggested_plan = 'monthly'
 
-        # When trip is <= 6 days, calculate daily plan cost. Suggest daily
-        # plan.
-        elif trip_duration <= 6 & trip_duration > 0:
-            monthly_cost = (int(trip_duration / 30)) * 70
-            daily_cost = trip_duration * 10
-            suggested_plan = 'daily'
+    #     # When trip is <= 6 days, calculate daily plan cost. Suggest daily
+    #     # plan.
+    #     elif trip_duration <= 6 & trip_duration > 0:
+    #         monthly_cost = (int(trip_duration / 30)) * 70
+    #         daily_cost = trip_duration * 10
+    #         suggested_plan = 'daily'
 
-        else:
-            # This should never happen b/c trip_duration would have to be
-            # negative
-            suggested_plan = 'null'
+    #     else:
+    #         # This should never happen b/c trip_duration would have to be
+    #         # negative
+    #         suggested_plan = 'null'
 
-        res = {
-            "sessionInfo": { 
-                "parameters": { 
-                        "monthly_cost": monthly_cost,
-                        "daily_cost": daily_cost,
-                        "suggested_plan": suggested_plan
-                    } 
-                }
-            }
+    #     res = {
+    #         "sessionInfo": { 
+    #             "parameters": { 
+    #                     "monthly_cost": monthly_cost,
+    #                     "daily_cost": daily_cost,
+    #                     "suggested_plan": suggested_plan
+    #                 } 
+    #             }
+    #         }
 
     # Default Case
     else:

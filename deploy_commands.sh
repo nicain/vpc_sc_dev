@@ -110,6 +110,23 @@ gcloud compute instance-groups unmanaged add-instances webhook --zone=${ZONE?} -
 gcloud functions deploy ${WEBHOOK_NAME?} --entry-point ${WEBHOOK_ENTRYPOINT?} --runtime ${WEBHOOK_RUNTIME?} --trigger-http --source=./webhook
 WEBHOOK_TRIGGER_URI=$(gcloud functions describe ${WEBHOOK_NAME?} --format json | jq -r .httpsTrigger.url)
 
+# Test the webhook:
+curl -X POST \
+  -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type:application/json" \
+  --data \
+  '{
+    "fulfillmentInfo":{
+      "tag":"validatePhoneLine"
+    },
+    "sessionInfo":{
+      "parameters":{
+        "phone_number":"123456"
+      }
+    }
+  }' \
+  https://us-central1-vpc-sc-live-demo-nicholascain3.cloudfunctions.net/custom-telco-webhook
+
 # Deploy the Dialogflow CX Agent:
 curl -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
   -H "Content-Type:application/json" \
@@ -132,7 +149,7 @@ curl -H "Authorization: Bearer $(gcloud auth application-default print-access-to
   "https://${REGION?}-dialogflow.googleapis.com/v3/${AGENT_NAME?}:restore"
 
 
-# Update the webhook URI:
+# Update the Dialogflow agent to query the webhook URI:
 curl -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
   -H "Content-Type:application/json" \
   -H "x-goog-user-project: ${PROJECT_ID}" \
@@ -147,3 +164,26 @@ curl -X PATCH -H "Authorization: Bearer $(gcloud auth application-default print-
     \"genericWebService\": {\"uri\": \"${WEBHOOK_TRIGGER_URI?}\"}
   }" \
   "https://${REGION?}-dialogflow.googleapis.com/v3/${DF_WEBHOOK_NAME?}"
+
+# Test the Dialogflow agent against the webhook URI:
+curl -X GET -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+  -H "Content-Type:application/json" \
+  -H "x-goog-user-project: ${PROJECT_ID}" \
+  "https://${REGION?}-dialogflow.googleapis.com/v3/${AGENT_NAME?}/flows" > flows.json
+export CRUISE_PLAN_FLOW=$(cat flows.json | jq -r '.flows | map(select(.displayName== "Cruise Plan"))[0].name')
+curl -X GET -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+  -H "Content-Type:application/json" \
+  -H "x-goog-user-project: ${PROJECT_ID}" \
+  "https://${REGION?}-dialogflow.googleapis.com/v3/${CRUISE_PLAN_FLOW?}/pages" > cruise_plan_flow_pages.json
+export CUSTOMER_LINE_PAGE=$(cat cruise_plan_flow_pages.json | jq -r '.pages | map(select(.displayName== "Collect Customer Line"))[0].name')
+curl -s -X POST -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+  -H "Content-Type:application/json" \
+  -H "x-goog-user-project: ${PROJECT_ID}" \
+  -d \
+  "{
+    \"queryInput\": {\"languageCode\": \"en\", \"text\": {\"text\": \"123456\"}},
+    \"queryParams\": {\"currentPage\": \"${CUSTOMER_LINE_PAGE?}\"}
+  }" \
+  "https://${REGION?}-dialogflow.googleapis.com/v3/${AGENT_NAME?}/sessions/123456:detectIntent" > response.json
+cat response.json | jq -r '.queryResult.responseMessages[0].text.text[0]'
+
