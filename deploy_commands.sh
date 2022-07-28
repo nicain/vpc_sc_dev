@@ -108,7 +108,7 @@ gcloud compute instance-groups unmanaged add-instances webhook --zone=${ZONE?} -
 
 # Deploy the webhook:
 gcloud functions deploy ${WEBHOOK_NAME?} --entry-point ${WEBHOOK_ENTRYPOINT?} --runtime ${WEBHOOK_RUNTIME?} --trigger-http --source=./webhook
-WEBHOOK_TRIGGER_URI=$(gcloud functions describe ${WEBHOOK_NAME?} --format json | jq .httpsTrigger | jq -r .url)
+WEBHOOK_TRIGGER_URI=$(gcloud functions describe ${WEBHOOK_NAME?} --format json | jq -r .httpsTrigger.url)
 
 # Deploy the Dialogflow CX Agent:
 curl -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
@@ -120,8 +120,8 @@ curl -H "Authorization: Bearer $(gcloud auth application-default print-access-to
     "defaultLanguageCode": "en",
     "timeZone": "America/Chicago"
   }' \
-  "https://${REGION?}-dialogflow.googleapis.com/v3/projects/${PROJECT_ID?}/locations/${REGION?}/agents" > agent.json
-export AGENT_NAME=$(cat agent.json| jq -r '.name')
+  "https://${REGION?}-dialogflow.googleapis.com/v3/projects/${PROJECT_ID?}/locations/${REGION?}/agents" > agents.json
+export AGENT_NAME=$(cat agents.json| jq -r '.name')
 curl -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
   -H "Content-Type:application/json" \
   -H "x-goog-user-project: ${PROJECT_ID}" \
@@ -130,3 +130,20 @@ curl -H "Authorization: Bearer $(gcloud auth application-default print-access-to
     \"agentUri\": \"${AGENT_SOURCE_URI}\"
   }" \
   "https://${REGION?}-dialogflow.googleapis.com/v3/${AGENT_NAME?}:restore"
+
+
+# Update the webhook URI:
+curl -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+  -H "Content-Type:application/json" \
+  -H "x-goog-user-project: ${PROJECT_ID}" \
+  "https://${REGION?}-dialogflow.googleapis.com/v3/${AGENT_NAME?}/webhooks" > webhooks.json
+export DF_WEBHOOK_NAME=$(cat webhooks.json| jq -r '.webhooks[0].name')
+curl -X PATCH -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
+  -H "Content-Type:application/json" \
+  -H "x-goog-user-project: ${PROJECT_ID}" \
+  -d \
+  "{
+    \"displayName\": \"cxPrebuiltAgentsTelecom\",
+    \"genericWebService\": {\"uri\": \"${WEBHOOK_TRIGGER_URI?}\"}
+  }" \
+  "https://${REGION?}-dialogflow.googleapis.com/v3/${DF_WEBHOOK_NAME?}"
